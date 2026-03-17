@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Email Verification | FinIntel</title>
+
+<script src="https://cdn.tailwindcss.com"></script>
+
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
+
+<style>
+
+body{
+font-family:'Plus Jakarta Sans',sans-serif;
+background:radial-gradient(circle at top,#0f172a,#020617);
+color:#e5e7eb;
+}
+
+.glass{
+background:rgba(15,23,42,0.75);
+backdrop-filter:blur(22px);
+border:1px solid rgba(255,255,255,0.08);
+}
+
+.loader{
+border:3px solid #1e293b;
+border-top:3px solid #06b6d4;
+border-radius:50%;
+width:24px;
+height:24px;
+animation:spin 1s linear infinite;
+margin:auto;
+}
+
+@keyframes spin{
+0%{transform:rotate(0deg)}
+100%{transform:rotate(360deg)}
+}
+
+.device-info{
+font-size:11px;
+color:#64748b;
+text-align:center;
+margin-top:5px;
+}
+
+.resend-btn{
+font-size:12px;
+color:#06b6d4;
+cursor:pointer;
+}
+
+.resend-btn:hover{
+text-decoration:underline;
+}
+
+/* OTP BOX STYLE */
+
+.otp-box{
+width:48px;
+height:55px;
+text-align:center;
+font-size:22px;
+border-radius:10px;
+background:#020617;
+border:1px solid rgba(255,255,255,0.15);
+color:white;
+}
+
+.otp-box:focus{
+outline:none;
+border-color:#06b6d4;
+box-shadow:0 0 0 1px #06b6d4;
+}
+
+</style>
+
+</head>
+
+<body class="min-h-screen flex items-center justify-center p-6">
+
+<form id="verifyForm"
+action="/auth/verify_email"
+method="POST"
+class="glass w-full max-w-md rounded-3xl p-10 space-y-6">
+
+<h2 class="text-2xl font-bold text-center text-white">
+Secure Email Verification
+</h2>
+
+<p class="text-center text-sm text-slate-400">
+We sent a secure 6-digit code to
+</p>
+
+<p class="text-center font-semibold text-blue-400">
+{{ email }}
+</p>
+
+<input type="hidden" name="email" value="{{ email }}">
+<input type="hidden" name="device_id" id="device_id">
+<input type="hidden" name="device_name" id="device_name">
+
+<!-- OTP INPUT -->
+
+<div>
+
+<label class="block text-sm mb-3 text-center">
+Enter Verification Code
+</label>
+
+<div class="flex justify-center gap-3">
+
+<input type="text" maxlength="1" class="otp-box">
+<input type="text" maxlength="1" class="otp-box">
+<input type="text" maxlength="1" class="otp-box">
+<input type="text" maxlength="1" class="otp-box">
+<input type="text" maxlength="1" class="otp-box">
+<input type="text" maxlength="1" class="otp-box">
+
+</div>
+
+<input type="hidden" name="otp" id="otp">
+
+</div>
+
+<!-- VERIFY BUTTON -->
+
+<button
+type="submit"
+id="verifyBtn"
+class="w-full bg-gradient-to-r from-blue-600 to-cyan-500
+hover:from-blue-500 hover:to-cyan-400
+py-4 rounded-xl font-bold text-white transition">
+
+Verify Secure Login
+
+</button>
+
+<!-- LOADER -->
+
+<div id="loader" class="hidden text-center">
+
+<div class="loader"></div>
+
+<p class="text-xs mt-2 text-slate-400">
+Verifying device and authentication...
+</p>
+
+</div>
+
+<!-- DEVICE INFO -->
+
+<div id="deviceInfo" class="device-info">
+Securing device identity...
+</div>
+
+<!-- RESEND -->
+
+<div class="text-center">
+
+<span id="resendBtn" class="resend-btn">
+Resend verification code
+</span>
+
+<p id="countdown" class="text-xs text-slate-400 mt-2">
+Resend available in 30s
+</p>
+
+</div>
+
+<p class="text-center text-xs text-slate-500">
+Enterprise security enabled • Device authentication active
+</p>
+
+</form>
+
+<script>
+
+////////////////////////////////////////////////////////////
+// DEVICE FINGERPRINT
+////////////////////////////////////////////////////////////
+
+function generateDeviceFingerprint(){
+
+const raw =
+navigator.userAgent +
+navigator.platform +
+navigator.language +
+screen.width +
+screen.height +
+Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+let hash=0;
+
+for(let i=0;i<raw.length;i++){
+hash=((hash<<5)-hash)+raw.charCodeAt(i);
+hash=hash&hash;
+}
+
+return "DEV_"+Math.abs(hash);
+
+}
+
+const deviceId=generateDeviceFingerprint();
+const deviceName=navigator.userAgent;
+
+document.getElementById("device_id").value=deviceId;
+document.getElementById("device_name").value=deviceName;
+
+document.getElementById("deviceInfo").innerText=
+"Device secured: "+navigator.platform;
+
+////////////////////////////////////////////////////////////
+// OTP AUTO INPUT
+////////////////////////////////////////////////////////////
+
+const otpBoxes=document.querySelectorAll(".otp-box");
+const hiddenOTP=document.getElementById("otp");
+
+otpBoxes.forEach((box,index)=>{
+
+box.addEventListener("input",function(){
+
+this.value=this.value.replace(/[^0-9]/g,"");
+
+if(this.value && index<otpBoxes.length-1){
+otpBoxes[index+1].focus();
+}
+
+updateOTP();
+
+});
+
+box.addEventListener("keydown",function(e){
+
+if(e.key==="Backspace" && !this.value && index>0){
+otpBoxes[index-1].focus();
+}
+
+});
+
+});
+
+function updateOTP(){
+
+let otp="";
+
+otpBoxes.forEach(box=>{
+otp+=box.value;
+});
+
+hiddenOTP.value=otp;
+
+}
+
+////////////////////////////////////////////////////////////
+// OTP PASTE SUPPORT
+////////////////////////////////////////////////////////////
+
+otpBoxes[0].addEventListener("paste",function(e){
+
+let paste=e.clipboardData.getData("text").trim();
+
+if(paste.length===6){
+
+otpBoxes.forEach((box,i)=>{
+box.value=paste[i];
+});
+
+updateOTP();
+
+}
+
+});
+
+////////////////////////////////////////////////////////////
+// FORM SUBMIT
+////////////////////////////////////////////////////////////
+
+let submitted=false;
+
+document.getElementById("verifyForm").addEventListener("submit",function(e){
+
+if(submitted){
+e.preventDefault();
+return;
+}
+
+submitted=true;
+
+document.getElementById("loader").classList.remove("hidden");
+document.getElementById("verifyBtn").disabled=true;
+document.getElementById("verifyBtn").innerText="Verifying...";
+
+});
+
+////////////////////////////////////////////////////////////
+// RESEND TIMER
+////////////////////////////////////////////////////////////
+
+let timeLeft=30;
+
+const countdown=document.getElementById("countdown");
+const resendBtn=document.getElementById("resendBtn");
+
+resendBtn.style.pointerEvents="none";
+resendBtn.style.opacity="0.5";
+
+const timer=setInterval(()=>{
+
+timeLeft--;
+
+countdown.innerText="Resend available in "+timeLeft+"s";
+
+if(timeLeft<=0){
+
+clearInterval(timer);
+
+countdown.innerText="";
+resendBtn.style.pointerEvents="auto";
+resendBtn.style.opacity="1";
+
+}
+
+},1000);
+
+////////////////////////////////////////////////////////////
+// RESEND CLICK
+////////////////////////////////////////////////////////////
+
+resendBtn.addEventListener("click",function(){
+
+window.location.href="/";
+
+});
+
+</script>
+
+</body>
+</html>

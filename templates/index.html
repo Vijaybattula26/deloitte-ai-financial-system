@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FinIntel AI | Multimodal Financial Intelligence</title>
+
+<script src="https://cdn.tailwindcss.com"></script>
+
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
+<link rel="stylesheet"
+href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+<!-- FLATPICKR -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+
+<style>
+
+body{
+font-family:'Plus Jakarta Sans',sans-serif;
+background:linear-gradient(135deg,#f0f9ff,#e0f2fe,#f8fafc);
+color:#0f172a;
+margin:0;
+}
+
+.wrapper{
+position:relative;
+width:100%;
+min-height:100vh;
+display:flex;
+align-items:center;
+justify-content:center;
+padding:60px 20px;
+}
+
+.glass{
+background:white;
+border-radius:20px;
+box-shadow:0 20px 50px rgba(15,23,42,0.08);
+border:1px solid rgba(0,0,0,0.05);
+}
+
+.label{
+color:#475569;
+font-size:0.85rem;
+}
+
+.file-box{
+border:2px dashed #cbd5e1;
+padding:20px;
+border-radius:16px;
+text-align:center;
+transition:0.3s;
+cursor:pointer;
+background:#f8fafc;
+}
+
+.file-box:hover{
+border-color:#0ea5e9;
+background:#e0f2fe;
+transform:scale(1.02);
+}
+
+.file-list{
+margin-top:10px;
+font-size:0.85rem;
+color:#334155;
+text-align:left;
+}
+
+.loader{
+border:3px solid #e2e8f0;
+border-top:3px solid #0ea5e9;
+border-radius:50%;
+width:30px;
+height:30px;
+animation:spin 1s linear infinite;
+margin:auto;
+}
+
+@keyframes spin{
+0%{transform:rotate(0deg);}
+100%{transform:rotate(360deg);}
+}
+
+.loader-box{
+display:none;
+text-align:center;
+margin-top:10px;
+}
+
+.logout-btn{
+position:absolute;
+top:20px;
+right:20px;
+background:#ef4444;
+padding:8px 14px;
+border-radius:8px;
+font-size:12px;
+color:white;
+transition:0.3s;
+}
+
+.logout-btn:hover{
+background:#dc2626;
+transform:scale(1.05);
+}
+
+.error-box{
+display:none;
+background:#fee2e2;
+color:#991b1b;
+padding:10px;
+border-radius:8px;
+font-size:12px;
+margin-top:10px;
+}
+
+.feature-card{
+background:white;
+border:1px solid #e2e8f0;
+padding:18px;
+border-radius:16px;
+transition:0.3s;
+cursor:pointer;
+box-shadow:0 5px 15px rgba(0,0,0,0.05);
+}
+
+.feature-card:hover{
+transform:translateY(-4px);
+box-shadow:0 10px 25px rgba(14,165,233,0.2);
+border-color:#0ea5e9;
+}
+
+/* MODAL */
+.modal-overlay{
+position:fixed;
+top:0;
+left:0;
+width:100%;
+height:100%;
+background:rgba(0,0,0,0.6);
+display:none;
+align-items:center;
+justify-content:center;
+z-index:9999;
+}
+
+.modal-box{
+background:white;
+padding:30px;
+border-radius:20px;
+width:420px;
+animation:fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn{
+from{transform:scale(0.9);opacity:0;}
+to{transform:scale(1);opacity:1;}
+}
+
+/* DATE INPUT */
+.date-wrapper{
+position:relative;
+}
+
+.date-input{
+width:100%;
+padding:12px 45px 12px 15px;
+border-radius:14px;
+background:white;
+border:1px solid #cbd5e1;
+color:#0f172a;
+transition:0.3s;
+}
+
+.date-input:focus{
+outline:none;
+border-color:#0ea5e9;
+box-shadow:0 0 10px rgba(14,165,233,0.3);
+}
+
+.calendar-icon{
+position:absolute;
+right:15px;
+top:50%;
+transform:translateY(-50%);
+cursor:pointer;
+color:#0ea5e9;
+font-size:18px;
+}
+
+/* CALENDAR FIX */
+.flatpickr-calendar{
+border-radius:15px !important;
+}
+
+.flatpickr-day{
+color:#0f172a !important;
+}
+
+.flatpickr-day.selected{
+background:#0ea5e9 !important;
+color:white !important;
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="wrapper">
+
+<a href="/logout" class="logout-btn">Logout</a>
+
+<div class="grid lg:grid-cols-2 gap-12 items-center max-w-6xl w-full">
+
+<!-- LEFT SIDE -->
+<div class="space-y-8">
+
+<h1 class="text-5xl font-extrabold leading-tight text-slate-900">
+<span class="text-sky-600">FinIntel AI</span><br>
+Financial Intelligence Engine
+</h1>
+
+<p class="text-slate-600 text-lg">
+Upload financial documents, extract insights, detect anomalies,
+and generate AI-powered financial reports instantly.
+</p>
+
+<div class="grid grid-cols-2 gap-4">
+
+<div class="feature-card" onclick="openModal('classification')">
+<i class="fa-solid fa-brain text-sky-600 text-xl mb-2"></i>
+<p class="text-sm font-semibold">AI Classification</p>
+</div>
+
+<div class="feature-card" onclick="openModal('analytics')">
+<i class="fa-solid fa-chart-line text-sky-600 text-xl mb-2"></i>
+<p class="text-sm font-semibold">Smart Analytics</p>
+</div>
+
+<div class="feature-card" onclick="openModal('anomaly')">
+<i class="fa-solid fa-magnifying-glass-chart text-sky-600 text-xl mb-2"></i>
+<p class="text-sm font-semibold">Anomaly Detection</p>
+</div>
+
+<div class="feature-card" onclick="openModal('security')">
+<i class="fa-solid fa-shield-halved text-sky-600 text-xl mb-2"></i>
+<p class="text-sm font-semibold">Secure Processing</p>
+</div>
+
+</div>
+</div>
+
+<!-- RIGHT FORM -->
+
+<form id="uploadForm"
+action="/process"
+method="POST"
+enctype="multipart/form-data"
+class="glass p-10 space-y-8 w-full">
+
+<h2 class="text-2xl font-bold text-center text-slate-900">Upload & Analyze</h2>
+
+<!-- FILE UPLOAD -->
+<div>
+<label class="label block mb-2">Upload Financial Documents</label>
+
+<div class="file-box" id="dropZone">
+
+<i class="fa-solid fa-cloud-arrow-up text-3xl mb-2 text-sky-600"></i>
+
+<p class="text-sm text-slate-500 mb-2">
+PDF, Images, Excel, CSV (Max 20 files)
+</p>
+
+<input type="file"
+name="documents"
+id="documents"
+multiple
+accept=".pdf,.png,.jpg,.jpeg,.csv,.xlsx"
+class="w-full p-3 rounded-xl bg-white border border-slate-300">
+
+<div id="fileList" class="file-list"></div>
+</div>
+
+<div id="errorBox" class="error-box"></div>
+</div>
+
+<!-- TEXT NOTE -->
+<div>
+<label class="label block mb-2">Text / Voice Note</label>
+<div class="relative">
+
+<textarea name="text_note"
+rows="3"
+id="textNote"
+class="w-full p-4 rounded-xl bg-white border border-slate-300"
+placeholder="Example: Salary 45000 groceries 5000"></textarea>
+
+<button type="button"
+id="voiceBtn"
+onclick="startVoiceInput()"
+class="absolute right-3 bottom-3 bg-sky-500 text-white px-3 py-2 rounded-lg text-sm hover:bg-sky-600">
+
+<i class="fa-solid fa-microphone"></i>
+
+</button>
+
+</div>
+
+<!-- REPORT TYPE -->
+<div>
+<label class="label block mb-2">Report Type</label>
+<div class="flex gap-6 text-sm text-slate-700">
+<label><input type="radio" name="report_type" value="daily"> Daily</label>
+<label><input type="radio" name="report_type" value="monthly" checked> Monthly</label>
+<label><input type="radio" name="report_type" value="yearly"> Yearly</label>
+</div>
+</div>
+
+<!-- DATE RANGE -->
+<div class="grid grid-cols-2 gap-4">
+<div>
+<label class="label">From</label>
+<div class="date-wrapper mt-2">
+<input id="dateFrom" name="date_from" type="text"
+class="date-input" placeholder="Select start date">
+<i class="fa-solid fa-calendar calendar-icon"
+onclick="fromPicker.open()"></i>
+</div>
+</div>
+
+<div>
+<label class="label">To</label>
+<div class="date-wrapper mt-2">
+<input id="dateTo" name="date_to" type="text"
+class="date-input" placeholder="Select end date">
+<i class="fa-solid fa-calendar calendar-icon"
+onclick="toPicker.open()"></i>
+</div>
+</div>
+</div>
+
+<div id="hintBox"
+class="bg-slate-100 px-4 py-3 rounded-xl text-sm text-sky-600">
+Monthly report → Day-wise analysis
+</div>
+
+<div>
+<label class="label block mb-2">Language</label>
+<select name="language"
+class="w-full p-3 rounded-xl bg-white border border-slate-300">
+<option value="en">English</option>
+<option value="te">Telugu</option>
+<option value="hi">Hindi</option>
+<option value="ta">Tamil</option>
+<option value="kn">Kannada</option>
+</select>
+</div>
+
+<button id="submitBtn"
+type="submit"
+class="w-full bg-gradient-to-r from-sky-500 to-blue-600
+hover:from-sky-600 hover:to-blue-700
+py-4 rounded-xl font-bold text-white transition hover:scale-105 shadow-lg">
+Analyze Financial Data
+</button>
+
+<div id="loaderBox" class="loader-box">
+<div class="loader"></div>
+<p class="text-xs mt-2 text-slate-500">
+Securely processing documents...
+</p>
+</div>
+
+</form>
+</div>
+</div>
+
+<!-- MODAL -->
+<div id="featureModal" class="modal-overlay">
+<div class="modal-box">
+<h3 id="modalTitle" class="text-xl font-bold text-sky-600 mb-3"></h3>
+<p id="modalContent" class="text-sm text-slate-600 mb-4"></p>
+<button onclick="closeModal()"
+class="bg-sky-500 px-4 py-2 rounded-lg text-white text-sm">
+Close
+</button>
+</div>
+</div>
+
+<script>
+
+/* CALENDAR INIT */
+const fromPicker = flatpickr("#dateFrom", {
+dateFormat: "Y-m-d",
+maxDate: "today"
+});
+
+const toPicker = flatpickr("#dateTo", {
+dateFormat: "Y-m-d",
+maxDate: "today"
+});
+
+document.getElementById("dateFrom").addEventListener("change", function(){
+toPicker.set("minDate", this.value);
+});
+
+/* FEATURE MODAL */
+function openModal(type){
+const modal=document.getElementById("featureModal");
+const title=document.getElementById("modalTitle");
+const content=document.getElementById("modalContent");
+
+const data={
+classification:{
+title:"AI Classification",
+text:"Transactions are automatically categorized into income and expense using AI-based rule processing and pattern recognition."
+},
+analytics:{
+title:"Smart Analytics",
+text:"Generates income vs expense charts, category breakdowns, and trend analysis based on uploaded data."
+},
+anomaly:{
+title:"Anomaly Detection",
+text:"Detects fraud, unusual spending patterns, extra charges, and suspicious financial activity."
+},
+security:{
+title:"Secure Processing",
+text:"All documents are validated, sanitized, and processed securely to ensure data privacy and integrity."
+}
+};
+
+title.innerText=data[type].title;
+content.innerText=data[type].text;
+modal.style.display="flex";
+}
+
+function closeModal(){
+document.getElementById("featureModal").style.display="none";
+}
+
+/* FILE VALIDATION */
+const fileInput=document.getElementById("documents");
+const fileList=document.getElementById("fileList");
+const errorBox=document.getElementById("errorBox");
+
+const MAX_FILE_SIZE=50*1024*1024;
+const MAX_FILES=20;
+
+fileInput.addEventListener("change",()=>{
+
+fileList.innerHTML="";
+errorBox.style.display="none";
+
+const allowedTypes = [
+"application/pdf",
+"image/png",
+"image/jpeg",
+"text/csv",
+"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+];
+
+if(fileInput.files.length > MAX_FILES){
+errorBox.innerText="Maximum 20 files allowed";
+errorBox.style.display="block";
+fileInput.value="";
+return;
+}
+
+for(let file of fileInput.files){
+
+if(!allowedTypes.includes(file.type)){
+errorBox.innerText="Unsupported file type: "+file.name;
+errorBox.style.display="block";
+fileInput.value="";
+return;
+}
+
+if(file.size > MAX_FILE_SIZE){
+errorBox.innerText="File too large: "+file.name;
+errorBox.style.display="block";
+fileInput.value="";
+return;
+}
+
+let div=document.createElement("div");
+div.innerText="✔ "+file.name;
+fileList.appendChild(div);
+
+}
+
+});
+
+
+const dropZone=document.getElementById("dropZone");
+
+dropZone.addEventListener("dragover",(e)=>{
+e.preventDefault();
+dropZone.style.borderColor="#0ea5e9";
+});
+
+dropZone.addEventListener("dragleave",()=>{
+dropZone.style.borderColor="#cbd5e1";
+});
+
+dropZone.addEventListener("drop",(e)=>{
+e.preventDefault();
+
+const droppedFiles = e.dataTransfer.files;
+const dataTransfer = new DataTransfer();
+
+for (let file of fileInput.files){
+dataTransfer.items.add(file);
+}
+
+for (let file of droppedFiles){
+dataTransfer.items.add(file);
+}
+
+fileInput.files = dataTransfer.files;
+
+fileInput.dispatchEvent(new Event("change"));
+
+dropZone.style.borderColor="#cbd5e1";
+});
+
+let submitted=false;
+
+document.getElementById("uploadForm").addEventListener("submit",(e)=>{
+
+const hasFiles=fileInput.files.length>0;
+const hasText=document.getElementById("textNote").value.trim().length>0;
+
+if(!hasFiles && !hasText){
+e.preventDefault();
+errorBox.innerText="Upload file or enter text";
+errorBox.style.display="block";
+return;
+}
+
+if(submitted){
+e.preventDefault();
+return;
+}
+
+submitted=true;
+document.getElementById("submitBtn").disabled=true;
+document.getElementById("submitBtn").innerText="Processing...";
+document.getElementById("loaderBox").style.display="block";
+
+});
+
+
+/* =========================
+VOICE INPUT FUNCTION
+========================= */
+
+function startVoiceInput(){
+
+const btn = document.getElementById("voiceBtn");
+
+btn.innerHTML = '<i class="fa-solid fa-microphone fa-beat"></i>';
+
+const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+if(!SpeechRecognition){
+alert("Voice recognition not supported in this browser");
+btn.innerHTML = '<i class="fa-solid fa-microphone"></i>';
+return;
+}
+
+const recognition = new SpeechRecognition();
+
+recognition.lang = "en-US";
+recognition.interimResults = false;
+
+recognition.start();
+
+recognition.onresult = function(event){
+
+const speech = event.results[0][0].transcript;
+
+const textarea = document.getElementById("textNote");
+
+if(textarea.value.trim().length > 0){
+textarea.value += " " + speech;
+}else{
+textarea.value = speech;
+}
+
+btn.innerHTML = '<i class="fa-solid fa-microphone"></i>';
+
+};
+
+recognition.onerror = function(){
+
+btn.innerHTML = '<i class="fa-solid fa-microphone"></i>';
+
+alert("Voice recognition failed");
+
+};
+
+recognition.onend = function(){
+
+btn.innerHTML = '<i class="fa-solid fa-microphone"></i>';
+
+};
+
+}
+
+</script>
+
+</body>
+</html>

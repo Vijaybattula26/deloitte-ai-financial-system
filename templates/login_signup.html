@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>FinIntel | Secure Authentication</title>
+
+<script src="https://cdn.tailwindcss.com"></script>
+
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
+
+<script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
+
+<style>
+
+body{
+font-family:'Plus Jakarta Sans',sans-serif;
+background: radial-gradient(circle at top,#0f172a,#020617);
+color:#e5e7eb;
+overflow:hidden;
+}
+
+.particle{
+position:absolute;
+width:6px;
+height:6px;
+background:#06b6d4;
+border-radius:50%;
+opacity:0.4;
+animation:float 10s infinite linear;
+}
+
+@keyframes float{
+0%{transform:translateY(0)}
+100%{transform:translateY(-1000px)}
+}
+
+.glass{
+background:rgba(15,23,42,0.75);
+backdrop-filter:blur(22px);
+border:1px solid rgba(255,255,255,0.08);
+}
+
+.input-field{
+background:#020617;
+border:1px solid rgba(255,255,255,0.15);
+color:white;
+}
+
+.input-field:focus{
+border-color:#06b6d4;
+outline:none;
+box-shadow:0 0 0 1px #06b6d4;
+}
+
+.loader{
+border:3px solid #1e293b;
+border-top:3px solid #06b6d4;
+border-radius:50%;
+width:24px;
+height:24px;
+animation:spin 1s linear infinite;
+margin:auto;
+}
+
+@keyframes spin{
+0%{transform:rotate(0deg)}
+100%{transform:rotate(360deg)}
+}
+
+.device-info{
+font-size:11px;
+color:#64748b;
+text-align:center;
+}
+
+</style>
+
+</head>
+
+<body class="min-h-screen flex items-center justify-center p-6">
+
+<div class="particle" style="left:20%;top:80%;animation-duration:9s"></div>
+<div class="particle" style="left:40%;top:90%;animation-duration:11s"></div>
+<div class="particle" style="left:60%;top:85%;animation-duration:13s"></div>
+<div class="particle" style="left:80%;top:95%;animation-duration:8s"></div>
+
+<div class="flex items-center gap-10 max-w-6xl w-full">
+
+<div class="hidden md:block w-1/2">
+
+<lottie-player
+src="https://assets2.lottiefiles.com/packages/lf20_tno6cg2w.json"
+background="transparent"
+speed="1"
+style="width:100%;height:420px"
+loop
+autoplay> </lottie-player>
+
+</div>
+
+<div class="glass w-full md:w-1/2 rounded-3xl p-8 space-y-6 shadow-2xl">
+
+<h1 class="text-3xl font-extrabold text-center text-white">
+FinIntel Secure Authentication
+</h1>
+
+<p class="text-center text-sm text-slate-400">
+Enterprise-grade authentication with device security
+</p>
+
+<!-- LOGIN FORM -->
+
+<form id="loginForm" action="/auth/email" method="POST" class="space-y-4">
+
+<input type="hidden" name="device_id" id="device_id">
+<input type="hidden" name="device_name" id="device_name">
+
+<div>
+<label>Email Address</label>
+<input type="email" name="email" required placeholder="Enter your email" class="input-field w-full p-3 rounded-xl">
+</div>
+
+<div>
+<label>Password</label>
+<input type="password" name="password" required placeholder="Enter your password" class="input-field w-full p-3 rounded-xl">
+</div>
+
+<button type="submit" id="emailBtn"
+class="w-full bg-gradient-to-r from-blue-600 to-cyan-500 py-3 rounded-xl font-bold hover:scale-[1.02] transition">
+Continue Secure Login </button>
+
+</form>
+
+<!-- SIGNUP FORM -->
+
+<form id="signupForm" action="/auth/email" method="POST" class="space-y-4 hidden">
+
+<input type="hidden" name="device_id" id="device_id2">
+<input type="hidden" name="device_name" id="device_name2">
+
+<div>
+<label>Email Address</label>
+<input type="email" name="email" required placeholder="Enter your email" class="input-field w-full p-3 rounded-xl">
+</div>
+
+<div>
+<label>Password</label>
+<input type="password" name="password" required placeholder="Create password" class="input-field w-full p-3 rounded-xl">
+</div>
+
+<button type="submit"
+class="w-full bg-gradient-to-r from-green-600 to-emerald-500 py-3 rounded-xl font-bold hover:scale-[1.02] transition">
+Create Secure Account </button>
+
+</form>
+
+<!-- SWITCH -->
+
+<div class="text-center text-sm text-slate-400">
+
+<span id="switchText">New user?</span>
+
+<button onclick="toggleAuth()" id="switchBtn" class="text-blue-400 ml-1">
+Create account
+</button>
+
+</div>
+
+<div class="device-info" id="deviceInfo">
+Securing your device...
+</div>
+
+<div id="loader" class="hidden text-center">
+<div class="loader"></div>
+<p class="text-sm mt-2">Verifying device and sending secure code...</p>
+</div>
+
+</div>
+
+</div>
+
+<script>
+
+function generateDeviceFingerprint(){
+
+const raw=
+navigator.userAgent+
+navigator.platform+
+navigator.language+
+screen.width+
+screen.height
+
+let hash=0
+
+for(let i=0;i<raw.length;i++){
+
+hash=((hash<<5)-hash)+raw.charCodeAt(i)
+hash=hash&hash
+
+}
+
+return "DEV_"+Math.abs(hash)
+
+}
+
+const deviceId=generateDeviceFingerprint()
+
+document.getElementById("device_id").value=deviceId
+document.getElementById("device_name").value=navigator.userAgent
+
+document.getElementById("device_id2").value=deviceId
+document.getElementById("device_name2").value=navigator.userAgent
+
+document.getElementById("deviceInfo").innerText="Device secured: "+navigator.platform
+
+function toggleAuth(){
+
+const login=document.getElementById("loginForm")
+const signup=document.getElementById("signupForm")
+const text=document.getElementById("switchText")
+const btn=document.getElementById("switchBtn")
+
+if(login.classList.contains("hidden")){
+
+login.classList.remove("hidden")
+signup.classList.add("hidden")
+
+text.innerText="New user?"
+btn.innerText="Create account"
+
+}
+else{
+
+login.classList.add("hidden")
+signup.classList.remove("hidden")
+
+text.innerText="Already have account?"
+btn.innerText="Login"
+
+}
+
+}
+
+let submitted=false
+
+document.querySelectorAll("form").forEach(form=>{
+form.addEventListener("submit",function(e){
+
+if(submitted){
+e.preventDefault()
+return
+}
+
+submitted=true
+
+document.getElementById("loader").classList.remove("hidden")
+
+})
+})
+
+</script>
+
+</body>
+</html>

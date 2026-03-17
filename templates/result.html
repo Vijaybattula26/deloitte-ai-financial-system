@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="en" class="transition duration-500">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{{ ui.title }}</title>
+
+<script>
+tailwind.config = { darkMode: 'class' }
+</script>
+
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+
+<style>
+body{ font-family:'Inter',sans-serif; }
+
+.dark body{
+background:linear-gradient(-45deg,#0f172a,#1e1b4b,#0f172a,#1e1b4b);
+background-size:400% 400%;
+animation:gradientBG 12s ease infinite;
+}
+
+@keyframes gradientBG{
+0%{background-position:0% 50%;}
+50%{background-position:100% 50%;}
+100%{background-position:0% 50%;}
+}
+
+.glow-emerald{ box-shadow:0 0 15px rgba(16,185,129,0.6); }
+.glow-red{ box-shadow:0 0 15px rgba(239,68,68,0.6); }
+.glow-indigo{ box-shadow:0 0 15px rgba(99,102,241,0.6); }
+.dark .glow-text{ text-shadow:0 0 15px rgba(99,102,241,0.9); }
+.dark .glow-btn{ box-shadow:0 0 25px rgba(99,102,241,0.8); }
+
+.logout-btn{
+background:#dc2626;
+padding:8px 16px;
+border-radius:6px;
+color:white;
+font-size:13px;
+font-weight:600;
+}
+.logout-btn:hover{ background:#b91c1c; }
+
+.fraud-badge{ background:#dc2626;color:white;padding:4px 8px;border-radius:8px;font-size:11px;font-weight:600; }
+.anomaly-badge{ background:#7c3aed;color:white;padding:4px 8px;border-radius:8px;font-size:11px;font-weight:600; }
+.risk-badge{ background:#f59e0b;color:white;padding:4px 8px;border-radius:8px;font-size:11px;font-weight:600; }
+
+.process-row{ background:#f8fafc;font-size:12px; }
+.dark .process-row{ background:#1e293b; }
+
+.popup-overlay{
+position:fixed;top:0;left:0;width:100%;height:100%;
+background:rgba(0,0,0,0.6);
+display:flex;justify-content:center;align-items:center;
+z-index:9999;
+}
+
+.popup-box{
+background:white;padding:30px;border-radius:12px;
+width:420px;text-align:center;
+animation:popupFade 0.4s ease;
+}
+.dark .popup-box{ background:#0f172a; }
+
+@keyframes popupFade{
+from{transform:scale(0.7);opacity:0;}
+to{transform:scale(1);opacity:1;}
+}
+
+.toggle-pill{
+padding:8px 20px;
+border-radius:9999px;
+border:1px solid #e2e8f0;
+background:white;
+font-weight:600;
+cursor:pointer;
+transition:all 0.3s ease;
+}
+
+.toggle-pill:hover{
+border-color:#6366f1;
+box-shadow:0 0 12px rgba(99,102,241,0.3);
+transform:translateY(-2px);
+}
+
+.toggle-pill.active{
+background:#6366f1;
+color:white;
+border-color:#6366f1;
+box-shadow:0 0 15px rgba(99,102,241,0.5);
+}
+
+.dark .toggle-pill{
+background:#0f172a;
+border-color:#334155;
+}
+
+.dark .toggle-pill.active{
+background:#6366f1;
+}
+</style>
+</head>
+
+<body class="bg-gray-100 text-slate-800 dark:text-slate-200 transition duration-500">
+
+{% if savings.monthly_savings > 0 and recommendations %}
+<div id="popupModal" class="popup-overlay">
+<div class="popup-box">
+<h2 class="text-xl font-bold text-indigo-600 mb-3">
+🎉 {{ ui.excellent_health }}
+</h2>
+<p class="mb-4">{{ ui.saved_amount }} ₹ {{ savings.monthly_savings }}</p>
+<button onclick="showRecommendations()"
+class="bg-indigo-600 text-white px-5 py-2 rounded-lg hover:bg-indigo-700">
+{{ ui.view_recommendations }}
+</button>
+</div>
+</div>
+{% endif %}
+
+<div class="max-w-7xl mx-auto px-6 py-10 space-y-10">
+
+<div class="flex justify-between items-center flex-wrap gap-4">
+<h1 class="text-3xl font-extrabold dark:glow-text">
+{{ ui.title }}
+</h1>
+
+<div class="flex gap-3">
+
+<a href="/history"
+class="px-5 py-2 rounded-lg bg-purple-600 text-white hover:bg-purple-700 shadow">
+{{ ui.history }}
+</a>
+
+<button id="themeToggle"
+class="px-5 py-2 rounded-lg bg-slate-900 text-white dark:bg-indigo-600 dark:glow-btn">
+{{ ui.toggle_theme }}
+</button>
+
+<a href="/logout" class="logout-btn">{{ ui.logout }}</a>
+</div>
+</div>
+
+<span class="px-4 py-2 text-xs font-semibold rounded-full bg-blue-100 text-blue-700">
+{{ ui.mode }}: {{ doc_mode }}
+</span>
+
+<div class="grid md:grid-cols-4 gap-6">
+
+<div class="bg-white dark:bg-slate-900 p-6 rounded-xl shadow-lg border-2 border-emerald-500 glow-emerald">
+<p class="text-sm text-gray-500">{{ ui.income }}</p>
+<h2 class="text-2xl font-bold">₹ {{ income }}</h2>
+</div>
+
+<div class="bg-white dark:bg-slate-900 p-6 rounded-xl shadow-lg border-2 border-red-500 glow-red">
+<p class="text-sm text-gray-500">{{ ui.expense }}</p>
+<h2 class="text-2xl font-bold">₹ {{ expense }}</h2>
+</div>
+
+<div class="bg-white dark:bg-slate-900 p-6 rounded-xl shadow-lg border-2 border-indigo-500 glow-indigo">
+<p class="text-sm text-gray-500">{{ ui.savings }}</p>
+<h2 class="text-2xl font-bold">₹ {{ savings.monthly_savings }}</h2>
+</div>
+
+<div class="bg-white dark:bg-slate-900 p-6 rounded-xl shadow-lg border-2 border-indigo-500 glow-indigo">
+<p class="text-sm text-gray-500">{{ ui.health }}</p>
+<h2 class="text-2xl font-bold">{{ savings.financial_health }}</h2>
+</div>
+
+</div>
+
+<div class="flex justify-end gap-4">
+<button onclick="speakSummary()" class="px-6 py-3 bg-indigo-600 text-white rounded-lg font-semibold hover:bg-indigo-700 shadow glow-indigo">
+🔊 {{ ui.voice_summary }}
+</button>
+<button onclick="startVoiceQuery()" class="px-6 py-3 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 shadow">
+🎙 {{ ui.voice_query }}
+</button>
+</div>
+
+<div class="bg-white dark:bg-slate-900 p-6 rounded-xl shadow-lg space-y-6">
+
+<div class="grid md:grid-cols-4 gap-4">
+<button class="toggle-pill active" data-target="chartsSection">{{ ui.charts }}</button>
+
+<button class="toggle-pill" data-target="tableSection">{{ ui.table }}</button>
+
+<button class="toggle-pill" data-target="SummaryReportSection">
+{{ ui["Summary Report"] }}
+</button>
+
+<button class="toggle-pill" data-target="recommendationsSection">
+{{ ui.recommendations }}
+</button>
+
+<input type="text" id="searchInput"
+placeholder="{{ ui.search }}"
+class="w-full p-3 rounded-lg border border-gray-300 text-black">
+
+</div>
+
+
+<div id="SummaryReportSection"
+style="display:none"
+class="bg-white dark:bg-slate-900 p-6 rounded-xl shadow-lg space-y-4 glow-indigo">
+
+<h2 class="text-xl font-bold text-indigo-600">
+📊 Financial Summary Report
+</h2>
+
+<p>
+<strong>{{ ui.income }}:</strong> ₹ {{ income }}
+</p>
+
+<p>
+<strong>{{ ui.expense }}:</strong> ₹ {{ expense }}
+</p>
+
+<p>
+<strong>{{ ui.savings }}:</strong> ₹ {{ savings.monthly_savings }}
+</p>
+
+<p>
+<strong>{{ ui.health }}:</strong> {{ savings.financial_health }}
+</p>
+
+<p class="text-sm text-gray-500">
+
+{% if savings.monthly_savings < 0 %}
+You spent <b>₹ {{ savings.monthly_savings | abs }}</b> more than your income this period.
+Your financial health is classified as <b>{{ savings.financial_health }}</b>.
+Consider reducing non-essential expenses.
+{% else %}
+You saved <b>₹ {{ savings.monthly_savings }}</b> this period.
+Your financial health is classified as <b>{{ savings.financial_health }}</b>.
+Great job maintaining a positive savings rate.
+{% endif %}
+
+</p>
+
+<div class="bg-indigo-50 dark:bg-slate-800 p-4 rounded-lg mt-4">
+
+<h3 class="font-semibold text-indigo-600 mb-2">
+AI Financial Insights
+</h3>
+
+<ul class="text-sm space-y-1">
+
+{% if savings.monthly_savings < 0 %}
+<li>⚠ Your expenses exceed your income.</li>
+{% else %}
+<li>💰 You maintained positive savings.</li>
+{% endif %}
+
+<li>📊 Financial health status: {{ savings.financial_health }}.</li>
+
+<li>📉 Monitoring spending patterns can improve savings.</li>
+
+</ul>
+
+</div>
+
+</div>
+
+<div id="recommendationsSection" style="display:none;">
+<h2 class="text-xl font-bold text-indigo-600">{{ ui.trusted_recommendations }}</h2>
+
+{% for rec in recommendations %}
+<div class="bg-white dark:bg-slate-900 p-6 rounded-xl shadow-lg mt-4">
+<div class="flex justify-between items-center">
+<div>
+<h3 class="font-semibold text-lg">{{ rec.name }}</h3>
+<p class="text-sm text-gray-500">{{ rec.category }} • {{ rec.authority }}</p>
+</div>
+<span class="text-xs px-3 py-1 bg-indigo-100 text-indigo-600 rounded-full font-semibold">
+{{ ui.verified }}
+</span>
+</div>
+<div class="mt-4">
+<a href="{{ rec.official_link }}" target="_blank"
+class="inline-block px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition">
+{{ ui.visit_site }} →
+</a>
+</div>
+</div>
+{% endfor %}
+</div>
+
+<div id="chartsSection" class="space-y-10">
+
+<div class="bg-white dark:bg-slate-900 p-6 rounded-xl shadow-lg glow-indigo">
+<h3 class="font-semibold mb-2">{{ ui.income_vs_expense }}</h3>
+<div class="h-[300px]"><canvas id="barChart"></canvas></div>
+</div>
+
+<div class="grid md:grid-cols-2 gap-6">
+
+<div class="bg-white dark:bg-slate-900 p-6 rounded-xl shadow-lg glow-indigo">
+<h3 class="font-semibold mb-2">{{ ui.category_breakdown }}</h3>
+<div class="h-[350px]">
+<canvas id="categoryChart"></canvas>
+</div>
+</div>
+
+{% if monthly_labels %}
+<div id="trendSection" class="bg-white dark:bg-slate-900 p-6 rounded-xl shadow-lg glow-indigo">
+<h3 class="font-semibold mb-2">{{ ui.monthly_trend }}</h3>
+<div class="h-[350px]">
+<canvas id="trendChart"></canvas>
+</div>
+</div>
+{% endif %}
+
+</div>
+
+</div>
+
+{% if tables %}
+<div id="tableSection"
+class="bg-white dark:bg-slate-900 rounded-xl shadow-lg overflow-hidden glow-indigo">
+<table class="w-full text-sm">
+
+<thead class="bg-gray-100 dark:bg-slate-800">
+<tr>
+<th class="px-6 py-4 text-left">{{ ui.description }}</th>
+<th class="px-6 py-4 text-left">{{ ui.amount }}</th>
+<th class="px-6 py-4 text-left">{{ ui.type }}</th>
+<th class="px-6 py-4 text-left">{{ ui.category }}</th>
+<th class="px-6 py-4 text-left">{{ ui.mode }}</th>
+<th class="px-6 py-4 text-left">{{ ui.bank }}</th>
+<th class="px-6 py-4 text-left">{{ ui.extra }}</th>
+<th class="px-6 py-4 text-left">{{ ui.risk }}</th>
+<th class="px-6 py-4 text-left">{{ ui.fraud }}</th>
+<th class="px-6 py-4 text-left">{{ ui.date }}</th>
+</tr>
+</thead>
+
+<tbody>
+{% for row in tables %}
+<tr class="border-b border-gray-200 dark:border-slate-700 {% if row.fraud %} bg-red-50 dark:bg-red-900 {% endif %}">
+<td class="px-6 py-4">{{ row.description }}</td>
+<td class="px-6 py-4 font-semibold">₹ {{ row.amount }}</td>
+
+<td class="px-6 py-4">
+{% if row.type == ui.income_word %}
+<span class="px-3 py-1 rounded-full bg-emerald-100 text-emerald-700 font-semibold glow-emerald">
+{{ row.type }}
+</span>
+{% else %}
+<span class="px-3 py-1 rounded-full bg-red-100 text-red-700 font-semibold glow-red">
+{{ row.type }}
+</span>
+{% endif %}
+</td>
+
+<td class="px-6 py-4">{{ row.category }}</td>
+<td class="px-6 py-4">{{ row.mode }}</td>
+<td class="px-6 py-4">{{ row.bank }}</td>
+<td class="px-6 py-4 text-red-600">₹ {{ row.extra_charge }}</td>
+
+<td class="px-6 py-4">
+{% if row.risk_score and row.risk_score > 60 %}
+<span class="risk-badge">{{ row.risk_score }}</span>
+{% else %}
+<span class="px-2 py-1 text-xs text-green-600 bg-green-100 rounded">{{ ui.safe }}</span>
+{% endif %}
+</td>
+
+<td class="px-6 py-4">
+{% if row.fraud %}
+<span class="fraud-badge">{{ ui.fraud }}</span>
+{% elif row.anomaly %}
+<span class="anomaly-badge">{{ ui.anomaly }}</span>
+{% else %}
+—
+{% endif %}
+</td>
+
+<td class="px-6 py-4">{{ row.date }}</td>
+</tr>
+
+<tr class="process-row">
+<td colspan="10" class="px-6 py-3">
+<b>{{ ui.process }}:</b>
+{{ ui.product }} ₹{{ row.product_amount }}
+→ {{ ui.deducted }} ₹{{ row.deducted_amount }}
+→ {{ ui.extra }} ₹{{ row.extra_charge }}
+→ {{ ui.reason }}: {{ row.charge_reason }}
+</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+{% endif %}
+
+<div class="flex gap-4 justify-end">
+<a href="/download/excel"
+class="px-6 py-3 bg-indigo-600 text-white rounded-lg font-semibold hover:bg-indigo-700 shadow glow-indigo">
+{{ ui.download_excel }}
+</a>
+
+<a href="/download/csv"
+class="px-6 py-3 bg-gray-700 text-white rounded-lg font-semibold hover:bg-gray-800 shadow">
+{{ ui.download_csv }}
+</a>
+</div>
+
+</div>
+
+<script>
+
+const html=document.documentElement;
+if(localStorage.getItem("theme")==="dark"){ html.classList.add("dark"); }
+document.getElementById("themeToggle").onclick=()=>{
+html.classList.toggle("dark");
+localStorage.setItem("theme",html.classList.contains("dark")?"dark":"light");
+};
+
+function showRecommendations(){
+document.getElementById("popupModal").style.display="none";
+document.getElementById("recommendationsSection").style.display="block";
+}
+
+document.getElementById("searchInput").addEventListener("keyup",function(){
+let filter=this.value.toLowerCase();
+let rows=document.querySelectorAll("#tableSection tbody tr");
+
+for(let i=0;i<rows.length;i+=2){
+let mainRow=rows[i];
+let processRow=rows[i+1];
+
+if(mainRow.innerText.toLowerCase().includes(filter)){
+mainRow.style.display="";
+if(processRow) processRow.style.display="";
+}else{
+mainRow.style.display="none";
+if(processRow) processRow.style.display="none";
+}
+}
+});
+
+document.querySelectorAll(".toggle-pill").forEach(btn=>{
+btn.addEventListener("click",()=>{
+
+document.querySelectorAll(".toggle-pill").forEach(b=>b.classList.remove("active"));
+btn.classList.add("active");
+
+document.querySelectorAll("#chartsSection,#tableSection,#SummaryReportSection,#recommendationsSection")
+.forEach(sec=>sec.style.display="none");
+
+const section=document.getElementById(btn.dataset.target);
+if(section){
+section.style.display="block";
+}
+
+});
+});
+
+function speakSummary(){
+
+let text = `
+{{ ui.income }} {{ income }}.
+{{ ui.expense }} {{ expense }}.
+{{ ui.savings }} {{ savings.monthly_savings }}.
+{{ ui.health }} {{ savings.financial_health }}.
+`;
+
+let speech = new SpeechSynthesisUtterance(text);
+speech.lang="en-IN";
+
+window.speechSynthesis.cancel();
+window.speechSynthesis.speak(speech);
+
+}
+
+
+function startVoiceQuery(){
+
+fetch("/voice_query",{
+method:"POST"
+})
+.then(res=>res.json())
+.then(data=>{
+
+if(data.success){
+
+alert(
+"Voice Query: " + data.query + "\n\n" +
+"AI Response: " + data.response
+);
+
+let speech = new SpeechSynthesisUtterance(data.response);
+speech.lang="en-IN";
+window.speechSynthesis.cancel();
+window.speechSynthesis.speak(speech);
+
+}else{
+
+alert(data.error || "Voice query failed");
+
+}
+
+})
+.catch(err=>{
+console.error(err);
+alert("Voice system error");
+});
+
+}
+
+new Chart(document.getElementById("barChart"),{
+type:"bar",
+data:{
+labels:["{{ ui.income }}","{{ ui.expense }}"],
+datasets:[{
+data:[{{ income }},{{ expense }}],
+backgroundColor:["#16a34a","#dc2626"],
+borderRadius:8
+}]
+},
+options:{responsive:true,maintainAspectRatio:false}
+});
+
+let categoryData={};
+{% for row in tables %}
+if(!categoryData["{{ row.category }}"]){categoryData["{{ row.category }}"]=0;}
+categoryData["{{ row.category }}"]+= {{ row.amount }};
+{% endfor %}
+
+new Chart(document.getElementById("categoryChart"),{
+type:"pie",
+data:{
+labels:Object.keys(categoryData),
+datasets:[{
+data:Object.values(categoryData),
+backgroundColor:[
+"#6366f1","#16a34a","#f59e0b",
+"#dc2626","#14b8a6","#8b5cf6"
+]
+}]
+}
+});
+
+{% if monthly_labels %}
+new Chart(document.getElementById("trendChart"),{
+type:"line",
+data:{labels:{{ monthly_labels|tojson }},
+datasets:[
+{label:"{{ ui.income }}",data:{{ monthly_income|tojson }},
+borderColor:"#16a34a",
+backgroundColor:"rgba(22,163,74,0.2)",fill:true},
+{label:"{{ ui.expense }}",data:{{ monthly_expense|tojson }},
+borderColor:"#dc2626",
+backgroundColor:"rgba(220,38,38,0.2)",fill:true}
+]},
+options:{responsive:true,maintainAspectRatio:false}
+});
+{% endif %}
+
+</script>
+
+</body>
+</html>
